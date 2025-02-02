@@ -1,22 +1,41 @@
-use super::{request::Request, response::Response};
-use std::{io::Write, net::TcpStream};
+use std::{
+    io::{Read, Write},
+    net::{IpAddr, TcpStream},
+};
 
-pub struct Context<'a> {
-    stream: &'a TcpStream,
+pub struct Context {
+    stream: TcpStream,
+    addr: IpAddr,
 }
 
-impl<'a> Context<'a> {
-    pub fn new(stream: &'a TcpStream) -> Self {
-        Self { stream }
+impl Context {
+    pub const fn new(stream: TcpStream, addr: IpAddr) -> Self {
+        Self { stream, addr }
     }
 
-    pub fn request(&self) -> Request {
-        todo!()
+    #[inline]
+    pub fn request_address(&self) -> IpAddr {
+        self.addr
     }
 
-    pub fn send_response(&mut self, response: Response) {
-        let bytes = response.to_bytes();
-        let _res = self.stream.write(bytes);
-        todo!()
+    #[inline]
+    pub fn is_request_local(&self) -> bool {
+        self.addr.is_loopback()
+    }
+}
+
+impl Read for Context {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        self.stream.read(buf)
+    }
+}
+
+impl Write for Context {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.stream.write(buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.stream.flush()
     }
 }
