@@ -35,8 +35,30 @@ impl App {
         Ok(ctx)
     }
 
-    fn handle(&self, ctx: Context) {
-        todo!()
+    fn handle(&self, mut ctx: Context) {
+        let req = match ctx.request() {
+            Ok(req) => req,
+            Err(e) => {
+                println!(
+                    "Error parsing the request from {}: {e}",
+                    ctx.request_address()
+                );
+                return;
+            }
+        };
+
+        for (path, handler) in self.handlers.iter() {
+            let handler = *handler;
+
+            if true {
+                self.pool.execute(move || {
+                    if let Err(res) = handler(ctx) {
+                        log::error!("Cannot process a request: {res}")
+                    }
+                });
+                break;
+            }
+        }
     }
 
     pub fn poll_once(&self) {

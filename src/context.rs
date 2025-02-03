@@ -1,16 +1,23 @@
 use std::{
-    io::{Read, Write},
+    io::{self, Read, Write},
     net::{IpAddr, TcpStream},
 };
+
+use crate::request::Request;
 
 pub struct Context {
     stream: TcpStream,
     addr: IpAddr,
+    request: Option<Request>,
 }
 
 impl Context {
     pub const fn new(stream: TcpStream, addr: IpAddr) -> Self {
-        Self { stream, addr }
+        Self {
+            stream,
+            addr,
+            request: None,
+        }
     }
 
     #[inline]
@@ -21,6 +28,23 @@ impl Context {
     #[inline]
     pub fn is_request_local(&self) -> bool {
         self.addr.is_loopback()
+    }
+
+    fn read_bytes(&mut self) -> io::Result<Vec<u8>> {
+        let mut buffer = [0; 8 * 1024];
+        let ptr = self.read(&mut buffer)?;
+
+        Ok(buffer[..ptr].to_vec())
+    }
+
+    pub fn request(&mut self) -> Result<Request, Box<dyn std::error::Error>> {
+        match &self.request {
+            Some(req) => Ok(req.clone()),
+            None => {
+                let bytes = self.read_bytes()?;
+                Request::parse_from_bytes(bytes)
+            }
+        }
     }
 }
 
