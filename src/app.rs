@@ -77,4 +77,8 @@ impl App {
             self.poll_once();
         }
     }
+
+    pub fn add_handler(&mut self, path: impl Into<String>, handler: Handler) {
+        self.handlers.insert(path.into(), handler);
+    }
 }
