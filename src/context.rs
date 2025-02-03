@@ -31,7 +31,7 @@ impl Context {
     }
 
     fn read_bytes(&mut self) -> io::Result<Vec<u8>> {
-        let mut buffer = [0; 8 * 1024];
+        let mut buffer = [0; 30 * 1024];
         let ptr = self.read(&mut buffer)?;
 
         Ok(buffer[..ptr].to_vec())

@@ -55,7 +55,7 @@ pub struct Request {
 
 impl Request {
     pub fn parse_from_bytes(bytes: Vec<u8>) -> Result<Self, Box<dyn error::Error>> {
-        let mut headers = [http::EMPTY_HEADER; 100];
+        let mut headers = [http::EMPTY_HEADER; 200];
         let mut req = http::Request::new(&mut headers);
 
         let data_location = match req.parse(&bytes)? {
