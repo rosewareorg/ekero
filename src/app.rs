@@ -50,7 +50,7 @@ impl App {
         for (path, handler) in self.handlers.iter() {
             let handler = *handler;
 
-            if true {
+            if *path == req.path {
                 self.pool.execute(move || {
                     if let Err(res) = handler(ctx) {
                         log::error!("Cannot process a request: {res}")
