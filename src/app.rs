@@ -52,19 +52,9 @@ impl App {
         let req = (req.path, req.method);
 
         if let Some(handler) = self.handlers.get(&req) {
-            let handler = handler.clone();
-            self.pool.execute(move || {
-                if let Err(res) = handler(ctx) {
-                    log::error!("Cannot process a request: {res}")
-                }
-            });
+            self.send_to_thread_pool(ctx, handler);
         } else if let Some(ref handler) = self.default_handler {
-            let handler = handler.clone();
-            self.pool.execute(move || {
-                if let Err(res) = handler(ctx) {
-                    log::error!("Cannot process a request: {res}")
-                }
-            });
+            self.send_to_thread_pool(ctx, handler);
         } else {
             log::error!("No handler found for {:?} {}", req.1, req.0);
         }
@@ -101,5 +91,14 @@ impl App {
 
     pub fn set_default_handler(&mut self, handler: Handler) {
         self.default_handler = Some(handler);
+    }
+
+    fn send_to_thread_pool(&self, ctx: Context, handler: &Handler) {
+        let handler = handler.clone();
+        self.pool.execute(move || {
+            if let Err(res) = handler(ctx) {
+                log::error!("Cannot process a request: {res}")
+            }
+        });
     }
 }
