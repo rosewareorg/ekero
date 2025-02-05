@@ -1,6 +1,6 @@
 /* TODO */
 
-use crate::{context::Context, handler::Handler, threadpool::ThreadPool};
+use crate::{context::Context, handler::Handler, request::Method, threadpool::ThreadPool};
 use std::{
     collections::HashMap,
     io,
@@ -10,7 +10,7 @@ use std::{
 pub struct App {
     listener: TcpListener,
     pool: ThreadPool,
-    handlers: HashMap<String, Handler>,
+    handlers: HashMap<(String, Method), Handler>,
 }
 
 impl App {
@@ -50,7 +50,7 @@ impl App {
         for (path, handler) in self.handlers.iter() {
             let handler = *handler;
 
-            if *path == req.path {
+            if *path.0 == req.path && path.1 == req.method {
                 self.pool.execute(move || {
                     if let Err(res) = handler(ctx) {
                         log::error!("Cannot process a request: {res}")
@@ -78,7 +78,15 @@ impl App {
         }
     }
 
-    pub fn add_handler(&mut self, path: impl Into<String>, handler: Handler) {
-        self.handlers.insert(path.into(), handler);
+    pub fn add_handler(&mut self, path: impl Into<String>, method: Method, handler: Handler) {
+        self.handlers.insert((path.into(), method), handler);
+    }
+
+    pub fn get(&mut self, path: impl Into<String>, handler: Handler) {
+        self.add_handler(path, Method::Get, handler);
+    }
+
+    pub fn post(&mut self, path: impl Into<String>, handler: Handler) {
+        self.add_handler(path, Method::Post, handler);
     }
 }

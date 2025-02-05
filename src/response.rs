@@ -20,8 +20,8 @@ impl Response {
         self
     }
 
-    pub fn header<S: Into<String>>(mut self, header: S, data: Vec<u8>) -> Self {
-        self.headers.insert(header.into(), data);
+    pub fn header<S: Into<String>>(mut self, header: S, data: &[u8]) -> Self {
+        self.headers.insert(header.into(), data.to_vec());
         self
     }
 
