@@ -25,8 +25,8 @@ impl Response {
         self
     }
 
-    pub fn body(mut self, data: Option<Vec<u8>>) -> Self {
-        self.message_body = data;
+    pub fn body(mut self, data: &[u8]) -> Self {
+        self.message_body = Some(data.to_vec());
         self
     }
 }

@@ -42,7 +42,9 @@ impl Context {
             Some(req) => Ok(req.clone()),
             None => {
                 let bytes = self.read_bytes()?;
-                Request::parse_from_bytes(bytes)
+                let req = Request::parse_from_bytes(bytes)?;
+                self.request = Some(req.clone());
+                Ok(req)
             }
         }
     }
