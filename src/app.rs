@@ -47,17 +47,14 @@ impl App {
             }
         };
 
-        for (path, handler) in self.handlers.iter() {
-            let handler = *handler;
+        if let Some(handler) = self.handlers.get(&(req.path, req.method)) {
+            let handler = handler.clone();
 
-            if *path.0 == req.path && path.1 == req.method {
-                self.pool.execute(move || {
-                    if let Err(res) = handler(ctx) {
-                        log::error!("Cannot process a request: {res}")
-                    }
-                });
-                break;
-            }
+            self.pool.execute(move || {
+                if let Err(res) = handler(ctx) {
+                    log::error!("Cannot process a request: {res}")
+                }
+            });
         }
     }
 
