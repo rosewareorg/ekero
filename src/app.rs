@@ -11,6 +11,7 @@ pub struct App {
     listener: TcpListener,
     pool: ThreadPool,
     handlers: HashMap<(String, Method), Handler>,
+    default_handler: Option<Handler>,
 }
 
 impl App {
@@ -26,6 +27,7 @@ impl App {
             listener,
             pool,
             handlers,
+            default_handler: None,
         }
     }
 
@@ -47,14 +49,24 @@ impl App {
             }
         };
 
-        if let Some(handler) = self.handlers.get(&(req.path, req.method)) {
-            let handler = handler.clone();
+        let req = (req.path, req.method);
 
+        if let Some(handler) = self.handlers.get(&req) {
+            let handler = handler.clone();
             self.pool.execute(move || {
                 if let Err(res) = handler(ctx) {
                     log::error!("Cannot process a request: {res}")
                 }
             });
+        } else if let Some(ref handler) = self.default_handler {
+            let handler = handler.clone();
+            self.pool.execute(move || {
+                if let Err(res) = handler(ctx) {
+                    log::error!("Cannot process a request: {res}")
+                }
+            });
+        } else {
+            log::error!("No handler found for {:?} {}", req.1, req.0);
         }
     }
 
@@ -85,5 +97,9 @@ impl App {
 
     pub fn post(&mut self, path: impl Into<String>, handler: Handler) {
         self.add_handler(path, Method::Post, handler);
+    }
+
+    pub fn set_default_handler(&mut self, handler: Handler) {
+        self.default_handler = Some(handler);
     }
 }
