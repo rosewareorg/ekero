@@ -18,7 +18,7 @@ fn main() {
             _ => 0,
         };
 
-        let json = format!("{{\"count\": {count}");
+        let json = format!("{{\"count\": {count}}}");
         let json_size = format!("{}", json.len());
 
         let response = Response::new()
