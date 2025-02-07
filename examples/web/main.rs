@@ -3,7 +3,7 @@ use ekero::prelude::*;
 fn main() {
     clang_log::init(log::Level::Trace, "web");
 
-    let mut app = App::new("0.0.0.0:8000", 20);
+    let mut app = App::new("0.0.0.0:8000", 20, ());
 
     app.set_default_handler(|mut ctx| {
         const BYTES: &[u8] = include_bytes!("html/404.html");

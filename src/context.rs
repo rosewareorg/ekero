@@ -1,22 +1,26 @@
 use std::{
     io::{self, Read, Write},
     net::{IpAddr, TcpStream},
+    sync::{Arc, Mutex},
 };
 
 use crate::request::Request;
 
-pub struct Context {
+pub struct Context<T> {
     stream: TcpStream,
     addr: IpAddr,
     request: Option<Request>,
+
+    state: Arc<Mutex<T>>,
 }
 
-impl Context {
-    pub const fn new(stream: TcpStream, addr: IpAddr) -> Self {
+impl<T> Context<T> {
+    pub const fn new(stream: TcpStream, addr: IpAddr, state: Arc<Mutex<T>>) -> Self {
         Self {
             stream,
             addr,
             request: None,
+            state,
         }
     }
 
@@ -48,15 +52,22 @@ impl Context {
             }
         }
     }
+
+    pub fn lock_state(
+        &self,
+    ) -> Result<std::sync::MutexGuard<'_, T>, std::sync::PoisonError<std::sync::MutexGuard<'_, T>>>
+    {
+        self.state.lock()
+    }
 }
 
-impl Read for Context {
+impl<T> Read for Context<T> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.stream.read(buf)
     }
 }
 
-impl Write for Context {
+impl<T> Write for Context<T> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.stream.write(buf)
     }

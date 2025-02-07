@@ -1,4 +1,4 @@
 use crate::context::Context;
 use std::error::Error;
 
-pub type Handler = fn(Context) -> Result<(), Box<dyn Error>>;
+pub type Handler<T> = fn(Context<T>) -> Result<(), Box<dyn Error>>;

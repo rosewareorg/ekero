@@ -5,17 +5,20 @@ use std::{
     collections::HashMap,
     io,
     net::{TcpListener, ToSocketAddrs},
+    sync::{Arc, Mutex},
 };
 
-pub struct App {
+pub struct App<T> {
     listener: TcpListener,
     pool: ThreadPool,
-    handlers: HashMap<(String, Method), Handler>,
-    default_handler: Option<Handler>,
+    handlers: HashMap<(String, Method), Handler<T>>,
+    default_handler: Option<Handler<T>>,
+
+    state: Arc<Mutex<T>>,
 }
 
-impl App {
-    pub fn new<P>(path: P, threads: usize) -> Self
+impl<T: Send + 'static> App<T> {
+    pub fn new<P>(path: P, threads: usize, state: T) -> Self
     where
         P: ToSocketAddrs,
     {
@@ -28,16 +31,17 @@ impl App {
             pool,
             handlers,
             default_handler: None,
+            state: Arc::new(Mutex::new(state)),
         }
     }
 
-    fn receive_next(&self) -> io::Result<Context> {
+    fn receive_next(&self) -> io::Result<Context<T>> {
         let next = self.listener.accept()?;
-        let ctx = Context::new(next.0, next.1.ip());
+        let ctx = Context::new(next.0, next.1.ip(), Arc::clone(&self.state));
         Ok(ctx)
     }
 
-    fn handle(&self, mut ctx: Context) {
+    fn handle(&self, mut ctx: Context<T>) {
         let req = match ctx.request() {
             Ok(req) => req,
             Err(e) => {
@@ -77,23 +81,23 @@ impl App {
         }
     }
 
-    pub fn add_handler(&mut self, path: impl Into<String>, method: Method, handler: Handler) {
+    pub fn add_handler(&mut self, path: impl Into<String>, method: Method, handler: Handler<T>) {
         self.handlers.insert((path.into(), method), handler);
     }
 
-    pub fn get(&mut self, path: impl Into<String>, handler: Handler) {
+    pub fn get(&mut self, path: impl Into<String>, handler: Handler<T>) {
         self.add_handler(path, Method::Get, handler);
     }
 
-    pub fn post(&mut self, path: impl Into<String>, handler: Handler) {
+    pub fn post(&mut self, path: impl Into<String>, handler: Handler<T>) {
         self.add_handler(path, Method::Post, handler);
     }
 
-    pub fn set_default_handler(&mut self, handler: Handler) {
+    pub fn set_default_handler(&mut self, handler: Handler<T>) {
         self.default_handler = Some(handler);
     }
 
-    fn send_to_thread_pool(&self, ctx: Context, handler: &Handler) {
+    fn send_to_thread_pool(&self, ctx: Context<T>, handler: &Handler<T>) {
         let handler = handler.clone();
         self.pool.execute(move || {
             if let Err(res) = handler(ctx) {
