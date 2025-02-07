@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 license-file = "LICENSE"
 keywords = ["http", "tcp"]
+description = "simple http routing"
+readme = "readme.md"
+authors = ["Elisey Dudin <dudinelisey630@gmail.com>"]
+repository = "https://github.com/rosewareorg/ekero"
 
 [dependencies]
 httparse = "1.10.0"
