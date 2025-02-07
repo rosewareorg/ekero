@@ -1,9 +1,44 @@
-use std::{collections::HashMap, io};
+use std::{collections::HashMap, fmt, io};
 
 pub struct Response {
     pub status_code: u16,
-    pub headers: HashMap<String, Vec<u8>>,
+    pub headers: HashMap<&'static str, WritableValue>,
     pub message_body: Option<Vec<u8>>,
+}
+
+#[derive(Clone)]
+pub enum WritableValue {
+    String(String),
+    Number(usize),
+    StaticString(&'static str),
+}
+
+impl Into<WritableValue> for String {
+    fn into(self) -> WritableValue {
+        WritableValue::String(self)
+    }
+}
+
+impl Into<WritableValue> for &'static str {
+    fn into(self) -> WritableValue {
+        WritableValue::StaticString(self)
+    }
+}
+
+impl Into<WritableValue> for usize {
+    fn into(self) -> WritableValue {
+        WritableValue::Number(self)
+    }
+}
+
+impl fmt::Display for WritableValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Number(num) => write!(f, "{num}"),
+            Self::String(s) => write!(f, "{s}"),
+            Self::StaticString(s) => write!(f, "{s}"),
+        }
+    }
 }
 
 impl Response {
@@ -20,8 +55,8 @@ impl Response {
         self
     }
 
-    pub fn header<S: Into<String>>(mut self, header: S, data: &[u8]) -> Self {
-        self.headers.insert(header.into(), data.to_vec());
+    pub fn header<T: Into<WritableValue>>(mut self, header: &'static str, data: T) -> Self {
+        self.headers.insert(header, data.into());
         self
     }
 
@@ -108,8 +143,7 @@ impl Response {
         )?;
 
         for (name, data) in self.headers.iter() {
-            write!(source, "{name}: ")?;
-            source.write(&data)?;
+            write!(source, "{name}: {data}")?;
             source.write(b"\r\n")?;
         }
 

@@ -9,8 +9,8 @@ fn main() {
         let response = Response::new()
             .body(b"pong")
             .status_code(202)
-            .header("Content-Type", b"text/plain")
-            .header("Content-Length", b"4");
+            .header("Content-Type", "text/plain")
+            .header("Content-Length", 4);
 
         response.write_to(&mut ctx)?;
 

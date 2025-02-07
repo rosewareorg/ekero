@@ -19,13 +19,12 @@ fn main() {
         };
 
         let json = format!("{{\"count\": {count}}}");
-        let json_size = format!("{}", json.len());
 
         let response = Response::new()
             .body(json.as_bytes())
             .status_code(200)
-            .header("Content-Type", b"application/json")
-            .header("Content-Length", json_size.as_bytes());
+            .header("Content-Type", "application/json")
+            .header("Content-Length", json.len());
 
         response.write_to(&mut ctx)?;
 

@@ -7,12 +7,11 @@ fn main() {
 
     app.set_default_handler(|mut ctx| {
         const BYTES: &[u8] = include_bytes!("html/404.html");
-        let fmt = format!("{}", BYTES.len());
 
         let response = Response::new()
             .body(BYTES)
-            .header("Content-Type", b"text/html")
-            .header("Content-Length", fmt.as_bytes())
+            .header("Content-Type", "text/html")
+            .header("Content-Length", BYTES.len())
             .status_code(404);
         response.write_to(&mut ctx)?;
 
@@ -21,12 +20,12 @@ fn main() {
 
     app.get("/", |mut ctx| {
         const BYTES: &[u8] = include_bytes!("html/root.html");
-        let fmt = format!("{}", BYTES.len());
 
         let response = Response::new()
             .body(BYTES)
-            .header("Content-Type", b"text/html")
-            .header("Content-Length", fmt.as_bytes());
+            .header("Content-Type", "text/html")
+            .header("Content-Length", BYTES.len());
+
         response.write_to(&mut ctx)?;
 
         Ok(())
