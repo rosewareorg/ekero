@@ -2,14 +2,14 @@
 a rust crate for simple http routing
 
 ```rust
-let mut app = App::new("0.0.0.0:8000", 20);
+let mut app = App::new("0.0.0.0:8000", 20, ());
 
 app.get("/ping", |mut ctx| {
     let response = Response::new()
         .body(b"pong")
         .status_code(202)
-        .header("Content-Type", b"text/plain")
-        .header("Content-Length", b"4");
+        .header("Content-Type", "text/plain")
+        .header("Content-Length", 4);
 
     response.write_to(&mut ctx)?;
 
