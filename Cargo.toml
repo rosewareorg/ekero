@@ -6,7 +6,7 @@ license-file = "LICENSE"
 keywords = ["http", "tcp"]
 description = "simple http routing"
 readme = "readme.md"
-authors = ["Elisey Dudin <dudinelisey630@gmail.com>"]
+authors = ["Elisey Dudin <dudinelisey630@gmail.com>", "Webbop <webbop@pm.me>"]
 repository = "https://github.com/rosewareorg/ekero"
 
 [dependencies]
