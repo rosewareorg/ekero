@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt, io};
+use std::{collections::HashMap, fmt, io, io::Write, net::TcpStream};
 
 use crate::resource::Resource;
 
@@ -137,7 +137,7 @@ fn status_code_as_string(code: u16) -> &'static str {
 }
 
 impl Response {
-    pub fn write_to<T: io::Write>(&self, source: &mut T) -> io::Result<()> {
+    pub fn write_to(&self, source: &mut TcpStream) -> io::Result<()> {
         write!(
             source,
             "HTTP/1.1 {} {}\r\n",
@@ -153,7 +153,7 @@ impl Response {
         source.write(b"\r\n")?;
 
         if let Some(ref body) = self.message_body {
-            write!(source, "{body}")?;
+            body.write_to_stream(source)?;
         }
 
         source.write(b"\r\n")?;

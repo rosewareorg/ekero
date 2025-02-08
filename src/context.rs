@@ -7,7 +7,7 @@ use std::{
 use crate::{errors::PoisonError, request::Request};
 
 pub struct Context<T> {
-    stream: TcpStream,
+    pub(crate) stream: TcpStream,
     addr: IpAddr,
     request: Option<Request>,
 

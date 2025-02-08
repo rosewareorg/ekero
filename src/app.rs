@@ -101,7 +101,7 @@ impl<T: Send + 'static> App<T> {
         let handler = handler.clone();
         self.pool.execute(move || match handler(&mut ctx) {
             Ok(response) => {
-                let res = response.write_to(&mut ctx);
+                let res = response.write_to(&mut ctx.stream);
                 if let Err(e) = res {
                     log::error!("Cannot write the response to stream: {e}")
                 }
