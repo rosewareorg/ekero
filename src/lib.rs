@@ -11,5 +11,8 @@ pub mod threadpool;
 pub(crate) mod errors;
 
 pub mod prelude {
-    pub use super::{app::App, handler::Handler, request::*, response::Response};
+    pub use super::{
+        app::App, context::Context, handler::Handler, request::Request, request::*,
+        resource::Resource, response::Response,
+    };
 }
