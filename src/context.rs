@@ -1,7 +1,8 @@
 use std::{
+    error,
     io::{self, Read, Write},
     net::{IpAddr, TcpStream},
-    sync::{Arc, Mutex},
+    sync::{self, Arc, Mutex},
 };
 
 use crate::request::Request;
@@ -25,54 +26,54 @@ impl<T> Context<T> {
     }
 
     #[inline]
-    pub fn request_address(&self) -> IpAddr {
+    #[must_use]
+    pub const fn request_address(&self) -> IpAddr {
         self.addr
     }
 
     #[inline]
-    pub fn is_request_local(&self) -> bool {
+    #[must_use]
+    pub const fn is_request_local(&self) -> bool {
         self.addr.is_loopback()
     }
 
     fn read_bytes(&mut self) -> io::Result<Vec<u8>> {
-        let mut buffer = [0; 30 * 1024];
+        let mut buffer = vec![0; 30 * 1024].into_boxed_slice();
         let ptr = self.read(&mut buffer)?;
 
         Ok(buffer[..ptr].to_vec())
     }
 
-    pub fn request(&mut self) -> Result<Request, Box<dyn std::error::Error>> {
-        match &self.request {
-            Some(req) => Ok(req.clone()),
-            None => {
-                let bytes = self.read_bytes()?;
-                let req = Request::parse_from_bytes(bytes)?;
-                self.request = Some(req.clone());
-                Ok(req)
-            }
+    pub fn request(&mut self) -> Result<Request, Box<dyn error::Error>> {
+        if let Some(req) = self.request.as_ref() {
+            Ok(req.clone())
+        } else {
+            let bytes = self.read_bytes()?;
+            let req = Request::parse_from_bytes(&bytes)?;
+            self.request = Some(req.clone());
+            Ok(req)
         }
     }
 
     pub fn lock_state(
         &self,
-    ) -> Result<std::sync::MutexGuard<'_, T>, std::sync::PoisonError<std::sync::MutexGuard<'_, T>>>
-    {
+    ) -> Result<sync::MutexGuard<'_, T>, sync::PoisonError<sync::MutexGuard<'_, T>>> {
         self.state.lock()
     }
 }
 
 impl<T> Read for Context<T> {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.stream.read(buf)
     }
 }
 
 impl<T> Write for Context<T> {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.stream.write(buf)
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> io::Result<()> {
         self.stream.flush()
     }
 }

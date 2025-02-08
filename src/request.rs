@@ -4,6 +4,7 @@ use std::error;
 use std::fmt;
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[non_exhaustive]
 pub enum Method {
     Get,
     Post,
@@ -45,6 +46,7 @@ impl<'a> TryFrom<&'a str> for Method {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Request {
     pub method: Method,
     pub path: String,
@@ -54,20 +56,15 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn parse_from_bytes(bytes: Vec<u8>) -> Result<Self, Box<dyn error::Error>> {
+    pub fn parse_from_bytes(bytes: &[u8]) -> Result<Self, Box<dyn error::Error>> {
         let mut headers = [http::EMPTY_HEADER; 200];
         let mut req = http::Request::new(&mut headers);
 
-        let data_location = match req.parse(&bytes)? {
-            http::Status::Complete(data) => data,
-            _ => return Err("Failed parsing the request".into()),
+        let http::Status::Complete(data_location) = req.parse(bytes)? else {
+            return Err("Failed parsing the request".into());
         };
 
-        let body = if data_location != bytes.len() {
-            Some(bytes[data_location..].to_vec())
-        } else {
-            None
-        };
+        let body = (data_location != bytes.len()).then(|| bytes[data_location..].to_vec());
 
         let headers: HashMap<_, _> = req
             .headers
@@ -75,10 +72,7 @@ impl Request {
             .map(|header| (header.name.to_owned(), header.value.to_vec()))
             .collect();
 
-        let method = match req.method {
-            Some(method) => Method::try_from(method),
-            _ => Ok(Method::Get),
-        }?;
+        let method = req.method.map_or(Ok(Method::Get), Method::try_from)?;
 
         Ok(Self {
             method,
