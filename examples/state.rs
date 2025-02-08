@@ -9,7 +9,7 @@ fn main() {
 
     let mut app = App::new("0.0.0.0:8000", 20, State { count: 0 });
 
-    app.get("/increment", |mut ctx| {
+    app.get("/increment", |ctx| {
         let count = {
             let mut state = ctx.state_lock()?;
             let curr = state.count;
@@ -19,14 +19,10 @@ fn main() {
 
         let json = format!("{{\"count\": {count}}}");
 
-        let response = Response::new()
+        Ok(Response::new()
             .body(json)
             .status_code(200)
-            .header("Content-Type", "application/json");
-
-        response.write_to(&mut ctx)?;
-
-        Ok(())
+            .header("Content-Type", "application/json"))
     });
 
     app.get("/decrement", |ctx| {
@@ -39,14 +35,10 @@ fn main() {
 
         let json = format!("{{\"count\": {count}}}");
 
-        let response = Response::new()
+        Ok(Response::new()
             .body(json)
             .status_code(200)
-            .header("Content-Type", "application/json");
-
-        response.write_to(ctx)?;
-
-        Ok(())
+            .header("Content-Type", "application/json"))
     });
 
     app.poll_forever()

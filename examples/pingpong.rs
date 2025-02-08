@@ -5,15 +5,11 @@ fn main() {
 
     let mut app = App::new("0.0.0.0:8000", 20, ());
 
-    app.get("/ping", |ctx| {
-        let response = Response::new()
+    app.get("/ping", |_ctx| {
+        Ok(Response::new()
             .body("pong")
             .status_code(202)
-            .header("Content-Type", "text/plain");
-
-        response.write_to(ctx)?;
-
-        Ok(())
+            .header("Content-Type", "text/plain"))
     });
 
     app.poll_forever()

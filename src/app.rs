@@ -99,8 +99,14 @@ impl<T: Send + 'static> App<T> {
 
     fn send_to_thread_pool(&self, mut ctx: Context<T>, handler: &Handler<T>) {
         let handler = handler.clone();
-        self.pool.execute(move || {
-            if let Err(res) = handler(&mut ctx) {
+        self.pool.execute(move || match handler(&mut ctx) {
+            Ok(response) => {
+                let res = response.write_to(&mut ctx);
+                if let Err(e) = res {
+                    log::error!("Cannot write the response to stream: {e}")
+                }
+            }
+            Err(res) => {
                 if res.to_string() == "The mutex was poisoned" {
                     ctx.state.clear_poison();
                 }
