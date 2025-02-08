@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::error;
 use std::fmt;
 
+// An HTTP method
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 #[non_exhaustive]
 pub enum Method {

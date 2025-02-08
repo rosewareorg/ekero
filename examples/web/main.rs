@@ -5,30 +5,21 @@ fn main() {
 
     let mut app = App::new("0.0.0.0:8000", 20, ());
 
-    app.set_default_handler(|mut ctx| {
-        const BYTES: &[u8] = include_bytes!("html/404.html");
+    app.set_default_handler(|_ctx| {
+        const BYTES: &str = include_str!("html/404.html");
 
-        let response = Response::new()
+        Ok(Response::new()
             .body(BYTES)
             .header("Content-Type", "text/html")
-            .header("Content-Length", BYTES.len())
-            .status_code(404);
-        response.write_to(&mut ctx)?;
-
-        Ok(())
+            .status_code(404))
     });
 
-    app.get("/", |mut ctx| {
-        const BYTES: &[u8] = include_bytes!("html/root.html");
+    app.get("/", |_ctx| {
+        const BYTES: &str = include_str!("html/root.html");
 
-        let response = Response::new()
+        Ok(Response::new()
             .body(BYTES)
-            .header("Content-Type", "text/html")
-            .header("Content-Length", BYTES.len());
-
-        response.write_to(&mut ctx)?;
-
-        Ok(())
+            .header("Content-Type", "text/html"))
     });
 
     app.poll_forever()

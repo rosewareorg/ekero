@@ -1,12 +1,15 @@
-use std::{collections::HashMap, fmt, io};
+use std::{collections::HashMap, fmt, io, io::Write, net::TcpStream};
+
+use crate::resource::Resource;
 
 #[non_exhaustive]
 pub struct Response {
     pub status_code: u16,
     pub headers: HashMap<&'static str, WritableValue>,
-    pub message_body: Option<Vec<u8>>,
+    pub message_body: Option<Box<dyn Resource>>,
 }
 
+/// A type which can be a value of a header
 #[derive(Clone)]
 #[non_exhaustive]
 pub enum WritableValue {
@@ -76,8 +79,8 @@ impl Response {
 
     #[inline]
     #[must_use]
-    pub fn body(mut self, data: &[u8]) -> Self {
-        self.message_body = Some(data.to_vec());
+    pub fn body(mut self, data: impl Resource + 'static) -> Self {
+        self.message_body = Some(Box::new(data));
         self
     }
 
@@ -170,5 +173,31 @@ fn status_code_as_string(code: u16) -> &'static str {
         510 => "Not Extended",
         511 => "Network Authentication Required",
         _ => panic!("Unknown status code!"),
+    }
+}
+
+impl Response {
+    pub fn write_to(&self, source: &mut TcpStream) -> io::Result<()> {
+        write!(
+            source,
+            "HTTP/1.1 {} {}\r\n",
+            self.status_code,
+            status_code_as_string(self.status_code)
+        )?;
+
+        for (name, data) in self.headers.iter() {
+            write!(source, "{name}: {data}")?;
+            source.write(b"\r\n")?;
+        }
+
+        source.write(b"\r\n")?;
+
+        if let Some(ref body) = self.message_body {
+            body.write_to_stream(source)?;
+        }
+
+        source.write(b"\r\n")?;
+
+        Ok(())
     }
 }

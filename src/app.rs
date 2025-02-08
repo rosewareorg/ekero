@@ -45,7 +45,7 @@ impl<T: Send + 'static> App<T> {
         let req = match ctx.request() {
             Ok(req) => req,
             Err(e) => {
-                println!(
+                log::error!(
                     "Error parsing the request from {}: {e}",
                     ctx.request_address()
                 );
@@ -96,10 +96,20 @@ impl<T: Send + 'static> App<T> {
         self.default_handler = Some(handler);
     }
 
-    fn send_to_thread_pool(&self, ctx: Context<T>, handler: Handler<T>) {
-        self.pool.execute(move || {
-            if let Err(res) = handler(ctx) {
-                log::error!("Cannot process a request: {res}");
+    fn send_to_thread_pool(&self, mut ctx: Context<T>, handler: &Handler<T>) {
+        let handler = handler.clone();
+        self.pool.execute(move || match handler(&mut ctx) {
+            Ok(response) => {
+                let res = response.write_to(&mut ctx.stream);
+                if let Err(e) = res {
+                    log::error!("Cannot write the response to stream: {e}")
+                }
+            }
+            Err(res) => {
+                if res.to_string() == "The mutex was poisoned" {
+                    ctx.state.clear_poison();
+                }
+                log::error!("Cannot process a request: {res}")
             }
         });
     }

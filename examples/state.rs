@@ -9,26 +9,36 @@ fn main() {
 
     let mut app = App::new("0.0.0.0:8000", 20, State { count: 0 });
 
-    app.get("/increment", |mut ctx| {
-        let count = match ctx.lock_state() {
-            Ok(mut count_guard) => {
-                count_guard.count += 1;
-                count_guard.count - 1
-            }
-            _ => 0,
+    app.get("/increment", |ctx| {
+        let count = {
+            let mut state = ctx.state_lock()?;
+            let curr = state.count;
+            state.count += 1;
+            curr
         };
 
         let json = format!("{{\"count\": {count}}}");
 
-        let response = Response::new()
-            .body(json.as_bytes())
+        Ok(Response::new()
+            .body(json)
             .status_code(200)
-            .header("Content-Type", "application/json")
-            .header("Content-Length", json.len());
+            .header("Content-Type", "application/json"))
+    });
 
-        response.write_to(&mut ctx)?;
+    app.get("/decrement", |ctx| {
+        let count = {
+            let mut state = ctx.state_lock()?;
+            let curr = state.count;
+            state.count -= 1;
+            curr
+        };
 
-        Ok(())
+        let json = format!("{{\"count\": {count}}}");
+
+        Ok(Response::new()
+            .body(json)
+            .status_code(200)
+            .header("Content-Type", "application/json"))
     });
 
     app.poll_forever()

@@ -5,14 +5,14 @@ use std::{
     sync::{self, Arc, Mutex},
 };
 
-use crate::request::Request;
+use crate::{errors::PoisonError, request::Request};
 
 pub struct Context<T> {
-    stream: TcpStream,
+    pub(crate) stream: TcpStream,
     addr: IpAddr,
     request: Option<Request>,
 
-    state: Arc<Mutex<T>>,
+    pub state: Arc<Mutex<T>>,
 }
 
 impl<T> Context<T> {
@@ -55,10 +55,8 @@ impl<T> Context<T> {
         }
     }
 
-    pub fn lock_state(
-        &self,
-    ) -> Result<sync::MutexGuard<'_, T>, sync::PoisonError<sync::MutexGuard<'_, T>>> {
-        self.state.lock()
+    pub fn state_lock(&self) -> Result<MutexGuard<'_, T>, PoisonError> {
+        self.state.lock().map_err(|_e| PoisonError)
     }
 }
 
