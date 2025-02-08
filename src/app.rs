@@ -45,10 +45,6 @@ impl<T: Send + 'static> App<T> {
         let req = match ctx.request() {
             Ok(req) => req,
             Err(e) => {
-                if e.to_string() == "The mutex was poisoned" {
-                    ctx.state.clear_poison();
-                }
-
                 log::error!(
                     "Error parsing the request from {}: {e}",
                     ctx.request_address()
