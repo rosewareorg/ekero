@@ -97,10 +97,13 @@ impl<T: Send + 'static> App<T> {
         self.default_handler = Some(handler);
     }
 
-    fn send_to_thread_pool(&self, ctx: Context<T>, handler: &Handler<T>) {
+    fn send_to_thread_pool(&self, mut ctx: Context<T>, handler: &Handler<T>) {
         let handler = handler.clone();
         self.pool.execute(move || {
-            if let Err(res) = handler(ctx) {
+            if let Err(res) = handler(&mut ctx) {
+                if res.to_string() == "The mutex was poisoned" {
+                    ctx.state.clear_poison();
+                }
                 log::error!("Cannot process a request: {res}")
             }
         });
