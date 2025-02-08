@@ -1,17 +1,17 @@
 use std::{
     io::{self, Read, Write},
     net::{IpAddr, TcpStream},
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
 };
 
-use crate::request::Request;
+use crate::{errors::PoisonError, request::Request};
 
 pub struct Context<T> {
     stream: TcpStream,
     addr: IpAddr,
     request: Option<Request>,
 
-    state: Arc<Mutex<T>>,
+    pub state: Arc<Mutex<T>>,
 }
 
 impl<T> Context<T> {
@@ -53,11 +53,8 @@ impl<T> Context<T> {
         }
     }
 
-    pub fn lock_state(
-        &self,
-    ) -> Result<std::sync::MutexGuard<'_, T>, std::sync::PoisonError<std::sync::MutexGuard<'_, T>>>
-    {
-        self.state.lock()
+    pub fn state_lock(&self) -> Result<MutexGuard<'_, T>, PoisonError> {
+        self.state.lock().map_err(|_e| PoisonError)
     }
 }
 

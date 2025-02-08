@@ -10,12 +10,11 @@ fn main() {
     let mut app = App::new("0.0.0.0:8000", 20, State { count: 0 });
 
     app.get("/increment", |mut ctx| {
-        let count = match ctx.lock_state() {
-            Ok(mut count_guard) => {
-                count_guard.count += 1;
-                count_guard.count - 1
-            }
-            _ => 0,
+        let count = {
+            let mut state = ctx.state_lock()?;
+            let curr = state.count;
+            state.count += 1;
+            curr
         };
 
         let json = format!("{{\"count\": {count}}}");

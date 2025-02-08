@@ -6,6 +6,7 @@ pub struct Response {
     pub message_body: Option<Vec<u8>>,
 }
 
+/// A type which can be a value of a header
 #[derive(Clone)]
 pub enum WritableValue {
     String(String),

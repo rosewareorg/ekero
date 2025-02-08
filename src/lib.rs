@@ -6,6 +6,8 @@ pub mod app;
 pub mod handler;
 pub mod threadpool;
 
+pub(crate) mod errors;
+
 pub mod prelude {
     pub use super::{app::App, handler::Handler, request::*, response::Response};
 }
