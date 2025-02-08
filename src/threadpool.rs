@@ -11,6 +11,7 @@ pub struct ThreadPool {
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
 impl ThreadPool {
+    #[must_use]
     pub fn new(size: usize) -> Self {
         assert!(size > 0, "Cannot initialize a thread pool with 0 threads");
 

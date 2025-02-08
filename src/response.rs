@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt, io, io::Write, net::TcpStream};
 
 use crate::resource::Resource;
 
+#[non_exhaustive]
 pub struct Response {
     pub status_code: u16,
     pub headers: HashMap<&'static str, WritableValue>,
@@ -10,27 +11,28 @@ pub struct Response {
 
 /// A type which can be a value of a header
 #[derive(Clone)]
+#[non_exhaustive]
 pub enum WritableValue {
     String(String),
     Number(usize),
     StaticString(&'static str),
 }
 
-impl Into<WritableValue> for String {
-    fn into(self) -> WritableValue {
-        WritableValue::String(self)
+impl From<String> for WritableValue {
+    fn from(val: String) -> Self {
+        Self::String(val)
     }
 }
 
-impl Into<WritableValue> for &'static str {
-    fn into(self) -> WritableValue {
-        WritableValue::StaticString(self)
+impl From<&'static str> for WritableValue {
+    fn from(val: &'static str) -> Self {
+        Self::StaticString(val)
     }
 }
 
-impl Into<WritableValue> for usize {
-    fn into(self) -> WritableValue {
-        WritableValue::Number(self)
+impl From<usize> for WritableValue {
+    fn from(val: usize) -> Self {
+        Self::Number(val)
     }
 }
 
@@ -44,7 +46,15 @@ impl fmt::Display for WritableValue {
     }
 }
 
+impl Default for Response {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Response {
+    #[inline]
+    #[must_use]
     pub fn new() -> Self {
         Self {
             status_code: 200,
@@ -53,19 +63,49 @@ impl Response {
         }
     }
 
-    pub fn status_code(mut self, code: u16) -> Self {
+    #[inline]
+    #[must_use]
+    pub const fn status_code(mut self, code: u16) -> Self {
         self.status_code = code;
         self
     }
 
+    #[inline]
+    #[must_use]
     pub fn header<T: Into<WritableValue>>(mut self, header: &'static str, data: T) -> Self {
         self.headers.insert(header, data.into());
         self
     }
 
+    #[inline]
+    #[must_use]
     pub fn body(mut self, data: impl Resource + 'static) -> Self {
         self.message_body = Some(Box::new(data));
         self
+    }
+
+    pub fn write_to<T: io::Write>(&self, source: &mut T) -> io::Result<()> {
+        write!(
+            source,
+            "HTTP/1.1 {} {}\r\n",
+            self.status_code,
+            status_code_as_string(self.status_code)
+        )?;
+
+        for (name, data) in &self.headers {
+            write!(source, "{name}: {data}")?;
+            source.write_all(b"\r\n")?;
+        }
+
+        source.write_all(b"\r\n")?;
+
+        if let Some(body) = self.message_body.as_ref() {
+            source.write_all(body)?;
+        }
+
+        source.write_all(b"\r\n")?;
+
+        Ok(())
     }
 }
 

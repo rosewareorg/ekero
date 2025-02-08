@@ -56,9 +56,9 @@ impl<T: Send + 'static> App<T> {
         let req = (req.path, req.method);
 
         if let Some(handler) = self.handlers.get(&req) {
-            self.send_to_thread_pool(ctx, handler);
-        } else if let Some(ref handler) = self.default_handler {
-            self.send_to_thread_pool(ctx, handler);
+            self.send_to_thread_pool(ctx, *handler);
+        } else if let Some(handler) = self.default_handler.as_ref() {
+            self.send_to_thread_pool(ctx, *handler);
         } else {
             log::error!("No handler found for {:?} {}", req.1, req.0);
         }
@@ -70,7 +70,6 @@ impl<T: Send + 'static> App<T> {
             Ok(data) => self.handle(data),
             Err(e) => {
                 log::error!("Cannot receive the next client: {e}");
-                return;
             }
         }
     }
@@ -81,15 +80,15 @@ impl<T: Send + 'static> App<T> {
         }
     }
 
-    pub fn add_handler(&mut self, path: impl Into<String>, method: Method, handler: Handler<T>) {
+    pub fn add_handler<S: Into<String>>(&mut self, path: S, method: Method, handler: Handler<T>) {
         self.handlers.insert((path.into(), method), handler);
     }
 
-    pub fn get(&mut self, path: impl Into<String>, handler: Handler<T>) {
+    pub fn get<S: Into<String>>(&mut self, path: S, handler: Handler<T>) {
         self.add_handler(path, Method::Get, handler);
     }
 
-    pub fn post(&mut self, path: impl Into<String>, handler: Handler<T>) {
+    pub fn post<S: Into<String>>(&mut self, path: S, handler: Handler<T>) {
         self.add_handler(path, Method::Post, handler);
     }
 
