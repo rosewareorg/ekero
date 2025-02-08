@@ -7,10 +7,9 @@ fn main() {
 
     app.get("/ping", |ctx| {
         let response = Response::new()
-            .body(b"pong")
+            .body("pong")
             .status_code(202)
-            .header("Content-Type", "text/plain")
-            .header("Content-Length", 4);
+            .header("Content-Type", "text/plain");
 
         response.write_to(ctx)?;
 

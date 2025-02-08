@@ -20,10 +20,9 @@ fn main() {
         let json = format!("{{\"count\": {count}}}");
 
         let response = Response::new()
-            .body(json.as_bytes())
+            .body(json)
             .status_code(200)
-            .header("Content-Type", "application/json")
-            .header("Content-Length", json.len());
+            .header("Content-Type", "application/json");
 
         response.write_to(&mut ctx)?;
 
@@ -41,10 +40,9 @@ fn main() {
         let json = format!("{{\"count\": {count}}}");
 
         let response = Response::new()
-            .body(json.as_bytes())
+            .body(json)
             .status_code(200)
-            .header("Content-Type", "application/json")
-            .header("Content-Length", json.len());
+            .header("Content-Type", "application/json");
 
         response.write_to(ctx)?;
 

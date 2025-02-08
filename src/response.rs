@@ -1,9 +1,11 @@
 use std::{collections::HashMap, fmt, io};
 
+use crate::resource::Resource;
+
 pub struct Response {
     pub status_code: u16,
     pub headers: HashMap<&'static str, WritableValue>,
-    pub message_body: Option<Vec<u8>>,
+    pub message_body: Option<Box<dyn Resource>>,
 }
 
 /// A type which can be a value of a header
@@ -61,8 +63,8 @@ impl Response {
         self
     }
 
-    pub fn body(mut self, data: &[u8]) -> Self {
-        self.message_body = Some(data.to_vec());
+    pub fn body(mut self, data: impl Resource + 'static) -> Self {
+        self.message_body = Some(Box::new(data));
         self
     }
 }
@@ -151,7 +153,7 @@ impl Response {
         source.write(b"\r\n")?;
 
         if let Some(ref body) = self.message_body {
-            source.write(&body)?;
+            write!(source, "{body}")?;
         }
 
         source.write(b"\r\n")?;
