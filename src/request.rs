@@ -54,6 +54,19 @@ pub struct Request {
     pub version: u8,
     pub headers: HashMap<String, Vec<u8>>,
     pub body: Option<Vec<u8>>,
+    pub http_query: HashMap<String, String>,
+}
+
+pub fn parse_query(string: String, query: &mut HashMap<String, String>) {
+    for pair in string.split('&') {
+        let mut it = pair.split('=').take(2);
+        let kv = match (it.next(), it.next()) {
+            (Some(k), Some(v)) => (k.to_owned(), v.to_owned()),
+            _ => continue,
+        };
+
+        query.insert(kv.0, kv.1);
+    }
 }
 
 impl Request {
@@ -74,13 +87,21 @@ impl Request {
             .collect();
 
         let method = req.method.map_or(Ok(Method::Get), Method::try_from)?;
+        let mut path = req.path.unwrap_or("/").to_owned();
+        let mut http_query = HashMap::new();
+
+        if let Some(index) = path.find('?') {
+            path = path[0..index].to_owned();
+            parse_query(path[index..].to_owned(), &mut http_query);
+        }
 
         Ok(Self {
             method,
             headers,
             body,
             version: req.version.unwrap_or_default(),
-            path: req.path.unwrap_or("/").to_owned(),
+            path,
+            http_query,
         })
     }
 }
