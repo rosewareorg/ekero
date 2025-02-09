@@ -96,8 +96,7 @@ impl<T: Send + 'static> App<T> {
         self.default_handler = Some(handler);
     }
 
-    fn send_to_thread_pool(&self, mut ctx: Context<T>, handler: &Handler<T>) {
-        let handler = handler.clone();
+    fn send_to_thread_pool(&self, mut ctx: Context<T>, handler: Handler<T>) {
         self.pool.execute(move || match handler(&mut ctx) {
             Ok(response) => {
                 let res = response.write_to(&mut ctx.stream);

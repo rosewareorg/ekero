@@ -2,7 +2,7 @@ use std::{
     error,
     io::{self, Read, Write},
     net::{IpAddr, TcpStream},
-    sync::{self, Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
 };
 
 use crate::{errors::PoisonError, request::Request};

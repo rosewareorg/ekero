@@ -83,30 +83,6 @@ impl Response {
         self.message_body = Some(Box::new(data));
         self
     }
-
-    pub fn write_to<T: io::Write>(&self, source: &mut T) -> io::Result<()> {
-        write!(
-            source,
-            "HTTP/1.1 {} {}\r\n",
-            self.status_code,
-            status_code_as_string(self.status_code)
-        )?;
-
-        for (name, data) in &self.headers {
-            write!(source, "{name}: {data}")?;
-            source.write_all(b"\r\n")?;
-        }
-
-        source.write_all(b"\r\n")?;
-
-        if let Some(body) = self.message_body.as_ref() {
-            source.write_all(body)?;
-        }
-
-        source.write_all(b"\r\n")?;
-
-        Ok(())
-    }
 }
 
 fn status_code_as_string(code: u16) -> &'static str {
