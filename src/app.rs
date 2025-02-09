@@ -1,5 +1,3 @@
-/* TODO */
-
 use crate::{context::Context, handler::Handler, request::Method, threadpool::ThreadPool};
 use std::{
     collections::HashMap,
