@@ -91,8 +91,8 @@ impl Request {
         let mut http_query = HashMap::new();
 
         if let Some(index) = path.find('?') {
-            path = path[0..index].to_owned();
             parse_query(path[index..].to_owned(), &mut http_query);
+            path = path[0..index].to_owned();
         }
 
         Ok(Self {
