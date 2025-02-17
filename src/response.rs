@@ -80,6 +80,7 @@ impl Response {
     #[inline]
     #[must_use]
     pub fn body(mut self, data: impl Resource + 'static) -> Self {
+        self = data.add_headers(self);
         self.message_body = Some(Box::new(data));
         self
     }
